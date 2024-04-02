@@ -34,9 +34,19 @@ class Router {
     this.routes[path][method] = handler
   }
 
+  use(middleware) {
+    if (typeof middleware === 'function') {
+      this.middlewares.push(middleware)
+    }
+  }
+
   requestListener(request, response) {
     const parsedUrl = url.parse(request.url)
     const route = this.routes[parsedUrl.pathname]
+
+    this.middlewares.forEach((middleware) => {
+      middleware(request, response)
+    })
 
     if (route && route[request.method]) {
       route[request.method](request, response)
@@ -72,6 +82,10 @@ function leopardo() {
     router.delete(path, handler)
   }
 
+  function use(middleware) {
+    router.use(middleware)
+  }
+
   function listen(port, host = 'localhost', callback) {
     const server = http.createServer((request, response) => {
       router.requestListener(request, response)
@@ -85,12 +99,19 @@ function leopardo() {
     server.listen(port, host, callback)
   }
 
+  leopardo.cors = function() {
+    return function cors(request, response) {
+      response.setHeader('Access-Control-Allow-Origin', '*')
+    }
+  }
+
   return {
     get,
     post,
     put,
     patch,
     delete: del,
+    use,
     listen
   }
 }
