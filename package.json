@@ -1,0 +1,22 @@
+{
+  "name": "leopardo",
+  "version": "1.0.1",
+  "description": "Fast web framework for Node.js",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Alejandrocsdev/leopardo.git"
+  },
+  "keywords": [
+    "leopardo"
+  ],
+  "author": "Alejandrocsdev",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Alejandrocsdev/leopardo/issues"
+  },
+  "homepage": "https://github.com/Alejandrocsdev/leopardo#readme"
+}
