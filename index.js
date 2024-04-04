@@ -1,16 +1,10 @@
 const http = require('http')
 
 const router = require('./routes')
-// const middleware = require('./middlewares')
+const middleware = require('./middlewares')
 
 function leopardo() {
-  const { get, post, put, patch, delete: del
-    // , use 
-  } = router
-
-  // function use(middleware) {
-  //   router.use(middleware)
-  // }
+  const { get, post, put, patch, delete: del } = router
 
   function listen(port, host = 'localhost', callback) {
     const server = http.createServer()
@@ -20,13 +14,21 @@ function leopardo() {
     server.listen(port, host, callback)
   }
 
+  function use(middleware) {
+    router.use(middleware)
+  }
+
+  leopardo.cors = middleware.cors
+  leopardo.static = middleware.static
+  leopardo.methodOverride = middleware.methodOverride
+
   return {
     get,
     post,
     put,
     patch,
     delete: del,
-    // use,
+    use,
     listen
   }
 }

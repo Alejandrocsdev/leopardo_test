@@ -8,7 +8,7 @@ const routes = new Map()
 class Router {
   constructor() {
     this.routes = {}
-    // this.middlewares = []
+    this.middlewares = []
   }
 
   get(path, handler, method = 'GET') {
@@ -31,28 +31,54 @@ class Router {
     addRoute(path, method, handler)
   }
 
-  // use(middleware) {
-  //   if (typeof middleware === 'function') {
-  //     this.middlewares.push((request, response, next) => {
-  //       middleware(request, response, next)
-  //     })
-  //   }
-  // }
+  use(middleware) {
+    if (typeof middleware === 'function') {
+      this.middlewares.push(middleware)
+    }
+  }
 
   listener(request, response) {
     const path = url.parse(request.url).pathname
-    const method = request.method
+    let middlewareIndex = 0
 
-    // this.middlewares.forEach((middleware) => {
-    //   middleware(request, response)
-    // })
-
-    for (const [id, route] of routes) {
-      if (path === route.path && method === route.method) {
-        route.handler(request, response)
-        return
+    const next = () => {
+      middlewareIndex++
+      if (middlewareIndex < this.middlewares.length) {
+        this.middlewares[middlewareIndex](request, response, next)
+      } else {
+        processRoutes()
       }
     }
+
+    const processMiddlewares = () => {
+      if (middlewareIndex < this.middlewares.length) {
+        this.middlewares[middlewareIndex](request, response, next)
+      } else {
+        processRoutes()
+      }
+    }
+
+    const processRoutes = () => {
+      for (const [id, route] of routes) {
+        if (path === route.path && request.method === route.method) {
+          route.handler(request, response)
+          return
+        }
+      }
+    }
+
+    processMiddlewares()
+
+    // this.middlewares.forEach((middleware) => {
+    //   middleware(request, response, next)
+    // })
+
+    // for (const [id, route] of routes) {
+    //   if (path === route.path && method === route.method) {
+    //     route.handler(request, response)
+    //     return
+    //   }
+    // }
   }
 }
 
