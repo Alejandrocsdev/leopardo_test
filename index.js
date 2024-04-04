@@ -21,6 +21,7 @@ function leopardo() {
   leopardo.cors = middleware.cors
   leopardo.static = middleware.static
   leopardo.methodOverride = middleware.methodOverride
+  leopardo.urlencoded = middleware.urlencoded
 
   return {
     get,
