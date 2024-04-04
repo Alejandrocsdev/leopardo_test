@@ -5,42 +5,82 @@ const fs = require('fs')
 const views = path.resolve(__dirname, '..', '..','..', 'views')
 const layouts = path.resolve(views, 'layouts')
 
+// function engine(file, data) {
+//   const eachRegexp = /\{\{#each ([^}]+)\}\}[\s\S]*?\{\{\/each\}\}/
+//   const ifRegexp = /\{\{#if ([^}]+)\}\}[\s\S]*?\{\{\/if\}\}/
+//   const strRegexp = /\{\{(\w+)\}\}/g
+//   const objRegexp = /\{\{(\w+)\.(\w+)\}\}/g
+
+//   const content = fileContent(file)
+//   let main = fileContent('main')
+//   main = main.replace(/\{\{\{(.*?)\}\}\}/g, content)
+
+//   let continueReplacing = true
+//   while (continueReplacing) {
+//     continueReplacing = false
+
+//     if (eachRegexp.test(main) && data !== undefined) {
+//       main = eachHelper(main, eachRegexp, data)
+//       continueReplacing = eachRegexp.test(main) ? true : false
+//     }
+//     if (ifRegexp.test(main)) {
+//       main = ifHelper(main, ifRegexp, data)
+//       continueReplacing = ifRegexp.test(main) ? true : false
+//     }
+//     if (strRegexp.test(main)) {
+//       main = main.replace(strRegexp, (match, str) => {
+//         return data[str] !== null ? data[str] : ''
+//       })
+//       continueReplacing = true
+//     }
+//     if (objRegexp.test(main)) {
+//       main = main.replace(objRegexp, (match, obj, key) => {
+//         return data?.[obj]?.[key] ?? ''
+//       })
+//       continueReplacing = true
+//     }
+//   }
+//   return main
+// }
+
 function engine(file, data) {
-  const eachRegexp = /\{\{#each ([^}]+)\}\}[\s\S]*?\{\{\/each\}\}/
-  const ifRegexp = /\{\{#if ([^}]+)\}\}[\s\S]*?\{\{\/if\}\}/
-  const strRegexp = /\{\{(\w+)\}\}/g
-  const objRegexp = /\{\{(\w+)\.(\w+)\}\}/g
+  return new Promise((resolve, reject) => {
+    const eachRegexp = /\{\{#each ([^}]+)\}\}[\s\S]*?\{\{\/each\}\}/
+    const ifRegexp = /\{\{#if ([^}]+)\}\}[\s\S]*?\{\{\/if\}\}/
+    const strRegexp = /\{\{(\w+)\}\}/g
+    const objRegexp = /\{\{(\w+)\.(\w+)\}\}/g
 
-  const content = fileContent(file)
-  let main = fileContent('main')
-  main = main.replace(/\{\{\{(.*?)\}\}\}/g, content)
+    const content = fileContent(file)
+    let main = fileContent('main')
+    main = main.replace(/\{\{\{(.*?)\}\}\}/g, content)
 
-  let continueReplacing = true
-  while (continueReplacing) {
-    continueReplacing = false
+    let continueReplacing = true
+    while (continueReplacing) {
+      continueReplacing = false
 
-    if (eachRegexp.test(main) && data !== undefined) {
-      main = eachHelper(main, eachRegexp, data)
-      continueReplacing = eachRegexp.test(main) ? true : false
+      if (eachRegexp.test(main) && data !== undefined) {
+        main = eachHelper(main, eachRegexp, data)
+        continueReplacing = eachRegexp.test(main) ? true : false
+      }
+      if (ifRegexp.test(main)) {
+        main = ifHelper(main, ifRegexp, data)
+        continueReplacing = ifRegexp.test(main) ? true : false
+      }
+      if (strRegexp.test(main)) {
+        main = main.replace(strRegexp, (match, str) => {
+          return data[str] !== null ? data[str] : ''
+        })
+        continueReplacing = true
+      }
+      if (objRegexp.test(main)) {
+        main = main.replace(objRegexp, (match, obj, key) => {
+          return data?.[obj]?.[key] ?? ''
+        })
+        continueReplacing = true
+      }
     }
-    if (ifRegexp.test(main)) {
-      main = ifHelper(main, ifRegexp, data)
-      continueReplacing = ifRegexp.test(main) ? true : false
-    }
-    if (strRegexp.test(main)) {
-      main = main.replace(strRegexp, (match, str) => {
-        return data[str] !== null ? data[str] : ''
-      })
-      continueReplacing = true
-    }
-    if (objRegexp.test(main)) {
-      main = main.replace(objRegexp, (match, obj, key) => {
-        return data?.[obj]?.[key] ?? ''
-      })
-      continueReplacing = true
-    }
-  }
-  return main
+    resolve(main);
+  });
 }
 
 function fileContent(file) {

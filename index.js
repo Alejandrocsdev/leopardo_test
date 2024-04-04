@@ -10,7 +10,11 @@ function leopardo() {
   function listen(port, host = 'localhost', callback) {
     const server = http.createServer()
     server.on('request', (request, response) => {
-      response.render = engine
+      
+      response.render = function (file, data) {
+        engine(file, data).then((result) => response.end(result))
+      }
+
       router.listener(request, response)
     })
     server.listen(port, host, callback)
@@ -24,7 +28,7 @@ function leopardo() {
   leopardo.static = middleware.static
   leopardo.methodOverride = middleware.methodOverride
   leopardo.urlencoded = middleware.urlencoded
-  leopardo.engine = engine
+  // leopardo.engine = engine
 
   return {
     get,
