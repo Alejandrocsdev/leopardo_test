@@ -3,6 +3,7 @@ const http = require('http')
 const router = require('./routes')
 const middleware = require('./middlewares')
 const engine = require('./engine')
+const db = require('./mysql')
 
 function leopardo() {
   const { get, post, put, patch, delete: del } = router
@@ -29,6 +30,7 @@ function leopardo() {
   leopardo.methodOverride = middleware.methodOverride
   leopardo.urlencoded = middleware.urlencoded
   // leopardo.engine = engine
+  leopardo.db = db
 
   return {
     get,
