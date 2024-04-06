@@ -125,6 +125,66 @@ class Mysql {
       console.log(`Values bulk deleted from '${name}' table successfully`)
     })
   }
+
+  insertRow(name, body) {
+    const field = String(Object.keys(body))
+    const value = Object.values(body).map(value => this.connection.escape(value)).join(',')
+    this.connection.query(`INSERT INTO ${name} (${field}) VALUES (${value});`, (err) => {
+      if (err) {
+        console.log('Fail to insert row: ' + err)
+        return
+      }
+      console.log(`Value inserted into '${name}' table successfully`)
+    })
+  }
+
+  updateRow(name, body, id) {
+    const row = Object.entries(body)
+    .map(([key, value]) => `${this.connection.escapeId(key)} = ${this.connection.escape(value)}`)
+    .join(',')
+
+    this.connection.query(`UPDATE ${name} SET ${row} WHERE id = ${id};`, (err) => {
+      if (err) {
+        console.log('Fail to update row: ' + err)
+        return
+      }
+      console.log(`Value from '${name}' table updated successfully`)
+    })
+  }
+
+  deleteRow(name, id) {
+    this.connection.query(`DELETE FROM ${name} WHERE id = ${id};`, (err) => {
+      if (err) {
+        console.log('Fail to delete row: ' + err)
+        return
+      }
+      console.log(`Value deleted from '${name}' table successfully`)
+    })
+  }
+
+  async select(name) {
+    return new Promise((resolve, reject) => {
+      this.connection.query(`SELECT * FROM ${name};`, (err, results) => {
+        if (err) {
+          console.log('Fail to select table: ' + err)
+          reject(err)
+          return
+        }
+        console.log(`Select from '${name}' table successfully`)
+        resolve(results)
+      })
+    })
+  }
+
+  async getData(name) {
+    try {
+      const results = await this.select(name)
+      return results
+    } catch (err) {
+      console.error(err)
+      return null
+    }
+  }
 }
 
 const db = new Mysql(env)
