@@ -1,10 +1,7 @@
 const path = require('path')
 const fs = require('fs')
 
-let mysql = undefined
-let env = undefined
-const configPath = path.join(__dirname, '..', '..', '..', 'config', 'config.json')
-
+let mysql
 try {
   mysql = require('mysql2')
 } catch (error) {
@@ -12,6 +9,8 @@ try {
   process.exit(1) // Exit the process with an error code
 }
 
+let env
+const configPath = path.join(__dirname, '..', '..', '..', 'config', 'config.json')
 try {
   env = require(configPath)
 } catch (error) {
@@ -61,7 +60,22 @@ class Mysql {
     fs.writeFileSync(`${__dirname}/../../../config/config.json`, JSON.stringify(env))
   }
 
-  createTable(name, columns) {
+  createTable(name, column) {
+    const entries = Object.entries(column)
+    let columns = ''
+    entries.forEach((e) => {
+      const field = e[0]
+      if (e[1].Type === undefined) {
+        console.error(`Error: Type is undefined for field '${field}'`)
+        return
+      }
+      const attrs = [e[1].Type, e[1].Null, e[1].Key, e[1].Default, e[1].Extra]
+        .filter(Boolean)
+        .join(' ')
+      columns += `${field} ${attrs},`
+    })
+    columns = columns.slice(0, -1)
+
     this.connection.query(`CREATE TABLE IF NOT EXISTS ${name} (${columns})`, (err) => {
       if (err) {
         console.log('Fail to create table: ' + err)
@@ -78,6 +92,37 @@ class Mysql {
         return
       }
       console.log(`Table '${name}' dropped successfully`)
+    })
+  }
+
+  bulkInsert(name, data) {
+    if (Array.isArray(Object.values(data)[0])) {
+      data = Object.values(data)[0]
+    }
+    const keys = Object.keys(data[0]).filter((key) => key !== 'id')
+    const fields = String(keys)
+    let values = ''
+    data.forEach((row) => {
+      delete row.id
+      values += `('${Object.values(row).join("','")}'),`
+    })
+    values = values.slice(0, -1) + ';'
+    this.connection.query(`INSERT INTO ${name} (${fields}) VALUES ${values}`, (err) => {
+      if (err) {
+        console.log('Fail to bulk insert rows: ' + err)
+        return
+      }
+      console.log(`Values bulk inserted into '${name}' table successfully`)
+    })
+  }
+
+  bulkDelete(name) {
+    this.connection.query(`DELETE FROM ${name};`, (err) => {
+      if (err) {
+        console.log('Fail to delete rows: ' + err)
+        return
+      }
+      console.log(`Values bulk deleted from '${name}' table successfully`)
     })
   }
 }
