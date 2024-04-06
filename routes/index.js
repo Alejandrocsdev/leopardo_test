@@ -1,5 +1,6 @@
 // module
 const url = require('url')
+const requestMethods = require('../request')
 // utility
 const identifier = require('../utilities/identifier')
 // variable
@@ -60,7 +61,32 @@ class Router {
 
     const processRoutes = () => {
       for (const [id, route] of routes) {
-        if (path === route.path && request.method === route.method) {
+        // requestMethods(request, route)
+        request.params = {}
+
+        const pathSegments = path.split('/')
+        const routeSegments = route.path.split('/')
+
+        if (routeSegments.length !== pathSegments.length) {
+          continue // Skip this route if the number of segments doesn't match
+        }
+
+        let match = true
+        for (let i = 0; i < routeSegments.length; i++) {
+          if (routeSegments[i].startsWith(':')) {
+            const paramName = routeSegments[i].substring(1)
+            request.params[paramName] = pathSegments[i]
+            // Skip dynamic segments
+            continue
+          }
+          if (routeSegments[i] !== pathSegments[i]) {
+            match = false
+            break
+          }
+        }
+
+        if (match && request.method === route.method) {
+          
           route.handler(request, response)
           return
         }
@@ -68,17 +94,6 @@ class Router {
     }
 
     processMiddlewares()
-
-    // this.middlewares.forEach((middleware) => {
-    //   middleware(request, response, next)
-    // })
-
-    // for (const [id, route] of routes) {
-    //   if (path === route.path && method === route.method) {
-    //     route.handler(request, response)
-    //     return
-    //   }
-    // }
   }
 }
 

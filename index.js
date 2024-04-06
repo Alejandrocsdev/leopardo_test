@@ -2,22 +2,24 @@ const http = require('http')
 
 const router = require('./routes')
 const middleware = require('./middlewares')
-const engine = require('./engine')
-const db = require('./mysql')
+const Mysql = require('./mysql')
+const responseMethods = require('./response')
 
 function leopardo() {
   const { get, post, put, patch, delete: del } = router
 
-  function listen(port, host = 'localhost', callback) {
+  function listen(port, host, callback) {
     const server = http.createServer()
     server.on('request', (request, response) => {
-      
-      response.render = function (file, data) {
-        engine(file, data).then((result) => response.end(result))
-      }
+
+      responseMethods(response)
 
       router.listener(request, response)
     })
+    if (typeof host === 'function') {
+      callback = host
+      host = 'localhost'
+    }
     server.listen(port, host, callback)
   }
 
@@ -29,8 +31,7 @@ function leopardo() {
   leopardo.static = middleware.static
   leopardo.methodOverride = middleware.methodOverride
   leopardo.urlencoded = middleware.urlencoded
-  // leopardo.engine = engine
-  leopardo.db = db
+  leopardo.db = new Mysql()
 
   return {
     get,
