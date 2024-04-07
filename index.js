@@ -11,9 +11,7 @@ function leopardo() {
   function listen(port, host, callback) {
     const server = http.createServer()
     server.on('request', (request, response) => {
-
       responseMethods(response)
-
       router.listener(request, response)
     })
     if (typeof host === 'function') {
@@ -22,7 +20,6 @@ function leopardo() {
     }
     server.listen(port, host, callback)
   }
-
   function use(middleware) {
     router.use(middleware)
   }

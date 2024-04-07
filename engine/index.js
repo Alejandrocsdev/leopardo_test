@@ -33,7 +33,7 @@ function engine(file, data) {
 
       if (strRegexp.test(main)) {
         main = main.replace(strRegexp, (match, str) => {
-          return data[str] !== null ? data[str] : ''
+          return data[str] !== undefined ? data[str] : ''
         })
         continueReplacing = true
       }
