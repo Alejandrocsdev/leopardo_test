@@ -18,5 +18,8 @@
   "bugs": {
     "url": "https://github.com/Alejandrocsdev/leopardo/issues"
   },
-  "homepage": "https://github.com/Alejandrocsdev/leopardo#readme"
+  "homepage": "https://github.com/Alejandrocsdev/leopardo#readme",
+  "bin": {
+    "leopardo-sql": "./bin/script.js"
+  }
 }

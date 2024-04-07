@@ -66,7 +66,7 @@ class Mysql {
         console.log('Fail to create database: ' + err)
         return
       }
-      this.database(env, name, 'create')
+      this.database(this.env, name, 'create')
       console.log(`Database \x1b[34m${name}\x1b[0m created successfully`)
     })
   }
@@ -78,7 +78,7 @@ class Mysql {
         console.log('Fail to drop database: ' + err)
         return
       }
-      this.database(env, name, 'drop')
+      this.database(this.env, name, 'drop')
       console.log(`Database \x1b[31m${name}\x1b[0m dropped successfully`)
     })
   }
@@ -227,6 +227,20 @@ class Mysql {
       return null
     }
   }
-}
 
-module.exports = Mysql
+  script(up, down) {
+    const args = process.argv.slice(2)
+    if (args.length !== 1 || !['up', 'down'].includes(args[0])) {
+      console.error('Usage: node script.js <up|down>')
+      process.exit(1)
+    }
+    const command = args[0]
+    if (command === 'up') {
+      up()
+    } else if (command === 'down') {
+      down()
+    }
+  }
+}
+const sql = new Mysql()
+module.exports = sql
