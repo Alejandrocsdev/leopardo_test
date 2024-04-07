@@ -1,5 +1,6 @@
 const url = require('url')
-const requestMethods = (request, route) => {
+
+const requestParams = (request, route) => {
   const path = url.parse(request.url).pathname
   request.params = {}
 
@@ -25,4 +26,17 @@ const requestMethods = (request, route) => {
   return request.method === route.method
 }
 
-module.exports = requestMethods
+const requestQuery = (request) => {
+  request.query = {}
+  const parseUrl = url.parse(request.url)
+  if (parseUrl.query) {
+    const queryParams = parseUrl.query.split('&')
+
+    for (const param of queryParams) {
+      const [key, value] = param.split('=')
+      request.query[key] = value
+    }
+  }
+}
+
+module.exports = { requestParams, requestQuery }

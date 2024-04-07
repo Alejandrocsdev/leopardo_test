@@ -1,6 +1,6 @@
 {
   "name": "leopardo",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Fast web framework for Node.js",
   "main": "index.js",
   "scripts": {
