@@ -1,6 +1,6 @@
 // module
 const url = require('url')
-// const { requestParams, requestQuery } = require('../request')
+const { requestParams, requestQuery } = require('../request')
 // utility
 const identifier = require('../utilities/identifier')
 // variable
@@ -61,7 +61,7 @@ class Router {
 
     const processRoutes = () => {
       for (const [id, route] of routes) {
-        if (requestParams(request, route)) {
+        if (requestParams(request, route) && request.method === route.method) {
           requestQuery(request)
           route.handler(request, response)
           return

@@ -12,10 +12,9 @@ const requestParams = (request, route) => {
   }
 
   for (let i = 0; i < routeSegments.length; i++) {
-    if (routeSegments[i].startsWith(':')) {
+    if (routeSegments[i].startsWith(':') && !isNaN(pathSegments[i])) {
       const paramName = routeSegments[i].substring(1)
       request.params[paramName] = pathSegments[i]
-      // Skip dynamic segments
       continue
     }
     if (routeSegments[i] !== pathSegments[i]) {
