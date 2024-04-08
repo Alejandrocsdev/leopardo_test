@@ -1,6 +1,6 @@
 const engine = require('../engine')
 
-function responseMethods(response) {
+function extendResponse(response) {
   response.render = function (file, data) {
     engine(file, data).then((result) => response.end(result))
   }
@@ -27,4 +27,4 @@ function responseMethods(response) {
   }
 }
 
-module.exports = responseMethods
+module.exports = extendResponse

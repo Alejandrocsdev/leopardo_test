@@ -1,7 +1,8 @@
-#!/usr/bin/env node
+// #!/usr/bin/env node
 const fs = require('fs')
 const path = require('path')
-const sql = require('../mysql')
+const Mysql = require('../mysql')
+const sql = new Mysql()
 
 const commandHelper = `
 \x1b[4m\x1b[34mLeopardo SQL\x1b[0m
@@ -26,11 +27,8 @@ Commands:
   leopardo-sql init:models                       Initializes models
   leopardo-sql init:seeders                      Initializes seeders
   leopardo-sql migration:generate                Generates a new migration file
-  leopardo-sql migration:create                  Generates a new migration file
   leopardo-sql model:generate                    Generates a model and its migration
-  leopardo-sql model:create                      Generates a model and its migration
   leopardo-sql seed:generate                     Generates a new seed file
-  leopardo-sql seed:create                       Generates a new seed file
 
 Options:
   --version  Show version number
@@ -83,13 +81,22 @@ function folder(foldername, filename) {
     })
   }
 }
+const folderName = 'migrations'
+const fileName = 'index.js'
+const folderPath = path.join(__dirname, '..', '..', '..', folderName)
+const filePath = path.join(folderPath, fileName)
+const { up } = require(filePath)
+up()
 
 function script() {
   const args = process.argv.slice(2)
-  // const name = args[1].slice(2)
   if (!commands.includes(args[0])) {
     console.error(commandHelper)
     process.exit(1)
+  }
+  let name
+  if (args[1] === '--name') {
+    name = args[2]
   }
   const command = args[0]
   switch (command) {
@@ -111,16 +118,16 @@ function script() {
       folder('models', 'index.js')
       folder('seeders')
       break
-    // case 'db:create':
-    //   sql.createDatabase(name)
-    //   break
-    // case 'db:drop':
-    //   sql.dropDatabase(name)
-    //   break
+    case 'db:create':
+      sql.createDatabase(name)
+      break
+    case 'db:drop':
+      sql.dropDatabase(name)
+      break
     case 'migration:generate':
       folder('migrations', 'index.js')
       break
   }
 }
 
-script()
+// script()

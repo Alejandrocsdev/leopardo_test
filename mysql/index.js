@@ -235,12 +235,12 @@ class Mysql {
       process.exit(1)
     }
     const command = args[0]
-    if (command === 'up') {
+    if (command === 'db:migrate') {
       up()
-    } else if (command === 'down') {
+    } else if (command === 'db:migrate:undo') {
       down()
     }
   }
 }
-const sql = new Mysql()
-module.exports = sql
+
+module.exports = Mysql

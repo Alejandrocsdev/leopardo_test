@@ -1,56 +1,51 @@
-// module
+// Import necessary modules and files
 const url = require('url')
 const { requestParams, requestQuery } = require('../request')
-// utility
 const identifier = require('../utilities/identifier')
-// variable
+
+// Create a new Map to store routes
 const routes = new Map()
-// class
+
+// Router class to manage routes and middlewares
 class Router {
   constructor() {
-    this.routes = {}
     this.middlewares = []
   }
 
-  get(path, handler, method = 'GET') {
-    addRoute(path, method, handler)
+  // Add a GET route
+  get(path, handler) {
+    addRoute(path, handler, 'GET')
+  }
+  // Add a POST route
+  post(path, handler) {
+    addRoute(path, handler, 'POST')
+  }
+  // Add a PUT route
+  put(path, handler) {
+    addRoute(path, handler, 'PUT')
+  }
+  // Add a PATCH route
+  patch(path, handler) {
+    addRoute(path, handler, 'PATCH')
+  }
+  // Add a DELETE route
+  delete(path, handler) {
+    addRoute(path, handler, 'DELETE')
   }
 
-  post(path, handler, method = 'POST') {
-    addRoute(path, method, handler)
-  }
-
-  put(path, handler, method = 'PUT') {
-    addRoute(path, method, handler)
-  }
-
-  patch(path, handler, method = 'PATCH') {
-    addRoute(path, method, handler)
-  }
-
-  delete(path, handler, method = 'DELETE') {
-    addRoute(path, method, handler)
-  }
-
+  // Add a middleware
   use(middleware) {
     if (typeof middleware === 'function') {
       this.middlewares.push(middleware)
     }
   }
 
+  // Request listener for processing incoming requests
   listener(request, response) {
     const path = url.parse(request.url).pathname
     let middlewareIndex = 0
 
-    const next = () => {
-      middlewareIndex++
-      if (middlewareIndex < this.middlewares.length) {
-        this.middlewares[middlewareIndex](request, response, next)
-      } else {
-        processRoutes()
-      }
-    }
-
+    // Function to process middlewares
     const processMiddlewares = () => {
       if (middlewareIndex < this.middlewares.length) {
         this.middlewares[middlewareIndex](request, response, next)
@@ -59,9 +54,18 @@ class Router {
       }
     }
 
+    // Function to move to the next middleware
+    const next = () => {
+      middlewareIndex++
+      processMiddlewares()
+    }
+
+    // Function to process routes
     const processRoutes = () => {
       for (const [id, route] of routes) {
+        // Add params methods to the response object
         if (requestParams(request, route) && request.method === route.method) {
+          // Add query methods to the response object
           requestQuery(request)
           route.handler(request, response)
           return
@@ -69,14 +73,17 @@ class Router {
       }
     }
 
+    // Start processing middlewares
     processMiddlewares()
   }
 }
 
-function addRoute(path, method, handler) {
+// Function to add a route to the routes Map
+function addRoute(path, handler, method) {
   const id = identifier.id()
-  routes.set(id, { path, method, handler })
+  routes.set(id, { path, handler, method})
 }
 
+// Create a new instance of the Router class and export it
 const router = new Router()
 module.exports = router
