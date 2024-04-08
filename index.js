@@ -3,8 +3,7 @@ const http = require('http')
 const router = require('./routes')
 const middleware = require('./middlewares')
 const extendResponse = require('./response')
-const Mysql = require('./mysql')
-const sql = new Mysql()
+const SQL = require('./mysql')
 
 // Main function for creating the leopardo framework
 function leopardo() {
@@ -45,12 +44,6 @@ function leopardo() {
   leopardo.static = middleware.static
   leopardo.methodOverride = middleware.methodOverride
   leopardo.urlencoded = middleware.urlencoded
-  // leopardo.Mysql = Mysql
-  leopardo.prototype.Mysql = new Mysql()
-  // const sql = new Mysql()
-  // const sql.createTable
-  // const middleware = new Middleware()
-  leopardo.createtable = sql.createtable
 
   // Return an object with HTTP methods and middleware functions
   return {
@@ -60,15 +53,9 @@ function leopardo() {
     patch,
     delete: del,
     use,
-    listen,
-    sql: new Mysql()
+    listen
   }
 }
-const propertyNames = Object.getOwnPropertyNames(leopardo);
-console.log(propertyNames);
 
-// Get property descriptors of the function
-const propertyDescriptors = Object.getOwnPropertyDescriptors(leopardo);
-console.log(propertyDescriptors);
-// Export the leopardo function as the module
 module.exports = leopardo
+module.exports = { SQL }

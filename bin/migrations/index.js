@@ -1,24 +1,21 @@
-const sql = require('../../mysql')
+const { SQL } = require('leopardo')
 
-module.exports = sql.createTable('#tabeName#', {
-  id: {
-    Type: 'INT',
-    Key: 'PRIMARY KEY',
-    Default: 'AUTO_INCREMENT'
+module.exports = {
+  async up() {
+    /**
+     * Add altering commands here.
+     *
+     * Example:
+     * SQL.createTable('users', { Type: 'INT' });
+     */
   },
-  // name: {
-  //   Type: 'VARCHAR(255)',
-  //   Null: 'NOT NULL',
-  //   Key: '',
-  //   Default: '',
-  //   Extra: ''
-  // },
-  createdAt: {
-    Type: 'TIMESTAMP',
-    Default: 'DEFAULT CURRENT_TIMESTAMP'
-  },
-  updatedAt: {
-    Type: 'TIMESTAMP',
-    Default: 'DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'
+  async down() {
+    /**
+     * Add reverting commands here.
+     *
+     * Example:
+     * SQL.dropTable('users');
+     */
   }
-})
+}
+

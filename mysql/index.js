@@ -1,30 +1,6 @@
 const path = require('path')
 const fs = require('fs')
 
-// let mysql
-// try {
-//   mysql = require('mysql2')
-// } catch (error) {
-//   console.error('\x1b[31mERROR:\x1b[0m Please install \x1b[34mmysql2\x1b[0m package manually')
-//   process.exit(1) // Exit the process with an error code
-// }
-
-// let env
-// const configPath = path.join(__dirname, '..', '..', '..', 'config', 'config.json')
-// try {
-//   env = require(configPath)
-// } catch (error) {
-//   console.error(`\x1b[31mERROR:\x1b[0m Missing or invalid config.json file
-//   Please create a \x1b[31mconfig.json\x1b[0m file inside the \x1b[31mconfig\x1b[0m folder in your project's \x1b[31mroot\x1b[0m directory.
-//   The config.json file should contain your MySQL database configuration in the following format:
-//   \x1b[31m{
-//     "user": "your_username",
-//     "host": "your_hostname",
-//     "password": "your_password"
-//   }\x1b[0m`)
-//   process.exit(1) // Exit the process with an error code
-// }
-
 class Mysql {
   constructor(env) {
     this.connection = null
@@ -59,15 +35,31 @@ class Mysql {
     this.connection = this.mysql.createConnection(this.env)
   }
 
+  // async createDatabase(name) {
+  //   await this.init()
+  //   this.connection.query(`CREATE DATABASE IF NOT EXISTS ${name}`, (err) => {
+  //     if (err) {
+  //       console.log('Fail to create database: ' + err)
+  //       return
+  //     }
+  //     this.database(this.env, name, 'create')
+  //     console.log(`Database \x1b[34m${name}\x1b[0m created successfully`)
+  //   })
+  // }
+
   async createDatabase(name) {
     await this.init()
-    this.connection.query(`CREATE DATABASE IF NOT EXISTS ${name}`, (err) => {
-      if (err) {
-        console.log('Fail to create database: ' + err)
-        return
-      }
-      this.database(this.env, name, 'create')
-      console.log(`Database \x1b[34m${name}\x1b[0m created successfully`)
+    return new Promise((resolve, reject) => {
+      this.connection.query(`CREATE DATABASE IF NOT EXISTS ${name}`, (err) => {
+        if (err) {
+          console.log('Fail to create database: ' + err)
+          reject(err)
+          return
+        }
+        this.database(this.env, name, 'create')
+        console.log(`Database \x1b[34m${name}\x1b[0m created successfully`)
+        resolve()
+      })
     })
   }
 
@@ -227,20 +219,7 @@ class Mysql {
       return null
     }
   }
-
-  script(up, down) {
-    const args = process.argv.slice(2)
-    if (args.length !== 1 || !['up', 'down'].includes(args[0])) {
-      console.error('Usage: node script.js <up|down>')
-      process.exit(1)
-    }
-    const command = args[0]
-    if (command === 'db:migrate') {
-      up()
-    } else if (command === 'db:migrate:undo') {
-      down()
-    }
-  }
 }
 
-module.exports = Mysql
+const SQL = new Mysql()
+module.exports = SQL
