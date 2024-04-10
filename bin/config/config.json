@@ -1,5 +1,20 @@
 {
-  "user": "your_username",
-  "host": "your_hostname",
-  "password": "your_password"
+  "development": {
+    "user": "your_username",
+    "host": "your_hostname",
+    "password": "your_password",
+    "database": "your_database"
+  },
+  "test": {
+    "user": "your_username",
+    "host": "your_hostname",
+    "password": "your_password",
+    "database": "your_database"
+  },
+  "production": {
+    "user": "your_username",
+    "host": "your_hostname",
+    "password": "your_password",
+    "database": "your_database"
+  }
 }

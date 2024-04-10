@@ -4,15 +4,17 @@ const path = require('path')
 const SQL = require('../mysql')
 const timestamp = require('../utilities/timestamp')
 
-const commandHelper = `
-\x1b[4m\x1b[34mLeopardo SQL\x1b[0m
+const colors = require('../utilities/color')
+const underline = colors.underline
+const reset = colors.reset
 
-leopardo-sql <command>
+const leopardoV = require('leopardo/package.json').version
+const nodeV = process.version.substring(1)
+
+const commandHelper = `leopardo-sql <command>
 
 Commands:
   leopardo-sql db:migrate                        Run pending migrations
-  leopardo-sql db:migrate:schema:timestamps:add  Update migration table to have timestamps
-  leopardo-sql db:migrate:status                 List the status of all migrations
   leopardo-sql db:migrate:undo                   Reverts a migration
   leopardo-sql db:migrate:undo:all               Revert all migrations ran
   leopardo-sql db:seed                           Run specified seeder
@@ -26,44 +28,31 @@ Commands:
   leopardo-sql init:migrations                   Initializes migrations
   leopardo-sql init:models                       Initializes models
   leopardo-sql init:seeders                      Initializes seeders
-  leopardo-sql migration:generate                Generates a new migration file
-  leopardo-sql model:generate                    Generates a model and its migration
-  leopardo-sql seed:generate                     Generates a new seed file
+  leopardo-sql generate:migration                Generates a new migration file
+  leopardo-sql generate:model                    Generates a model and its migration
+  leopardo-sql generate:seed                     Generates a new seed file
 
 Options:
   --version  Show version number
   --help     Show help`
 
-const initCommands = [
-  'db:create',
-  'db:drop',
-  'init',
-  'init:config',
-  'init:migrations',
-  'init:models',
-  'init:seeders',
-  'db:meta'
-]
-
-const generateCommands = ['migration:generate', 'model:generate', 'seed:generate']
-
+const initCommands = ['init', 'init:config', 'init:migrations', 'init:models', 'init:seeders']
+const generateCommands = ['generate:migration', 'generate:model', 'generate:seed']
 const dbCommands = [
   'db:migrate',
-  'db:migrate:schema:timestamps:add',
-  'db:migrate:status',
   'db:migrate:undo',
   'db:migrate:undo:all',
   'db:seed',
   'db:seed:undo',
   'db:seed:all',
-  'db:seed:undo:all'
+  'db:seed:undo:all',
+  'db:create',
+  'db:drop'
 ]
 
 function folder(folderName, fileName, endName) {
   endName = endName === undefined ? fileName : endName
   const folderPath = path.join(__dirname, '..', '..', '..', folderName)
-  const sourcePath = path.join(__dirname, folderName, fileName)
-  const destinationPath = path.join(folderPath, endName)
 
   const args = process.argv.slice(2)
   let tableName
@@ -78,25 +67,11 @@ function folder(folderName, fileName, endName) {
   fs.mkdir(folderPath, { recursive: true }, (err) => {
     if (err) {
       console.error('Error creating folder:', err)
-    } else {
-      console.log('Folder created successfully.')
     }
   })
-
-  // if (fileName !== undefined) {
-  //   const sourcePath = path.join(__dirname, folderName, fileName)
-  //   const destinationPath = path.join(folderPath, endName)
-
-  //   fs.copyFile(sourcePath, destinationPath, (err) => {
-  //     if (err) {
-  //       console.error('Error copying file:', err)
-  //       return
-  //     }
-
-  //     console.log('File copied successfully.')
-  //   })
-  // }
   if (fileName !== undefined) {
+    const sourcePath = path.join(__dirname, folderName, fileName)
+    const destinationPath = path.join(folderPath, endName)
     fs.readFile(sourcePath, 'utf8', (err, data) => {
       if (err) {
         console.error('Error reading file:', err)
@@ -110,10 +85,13 @@ function folder(folderName, fileName, endName) {
           console.error('Error writing file:', err)
           return
         }
-
-        console.log('File copied and modified successfully.')
       })
     })
+  }
+  if (folderName === 'config') {
+    console.log('Created "config\\config.json"')
+  } else {
+    console.log(`Successfully created ${folderName} folder at "${folderPath}".`)
   }
 }
 
@@ -146,21 +124,9 @@ function executeSQL(folderName, command) {
       }
     })
   })
-
-  // const filePath = path.join(folderPath, fileName)
-  // const { up, down } = require(filePath)
-  // if (command === 'up') {
-  //   up()
-  // } else if (command === 'down') {
-  //   down()
-  // }
 }
 
 function initScript(args) {
-  let name = 'tableName'
-  if (args[1] === '--name' && args[2]) {
-    name = args[2]
-  }
   const command = args[0]
   switch (command) {
     case 'init':
@@ -168,18 +134,6 @@ function initScript(args) {
       folder('migrations')
       folder('models', 'index.js')
       folder('seeders')
-      break
-    case 'db:create':
-      SQL.createDatabase(name)
-        .then(() => {
-          SQL.createTable('migrationlog', { name: { Type: 'VARCHAR(255)', Key: 'PRIMARY KEY' } })
-        })
-        .catch((err) => {
-          console.error('Error creating database:', err)
-        })
-      break
-    case 'db:drop':
-      SQL.dropDatabase(name)
       break
     case 'init:config':
       folder('config', 'config.json')
@@ -240,10 +194,18 @@ function dbScript(args) {
     case 'db:seed:undo':
       executeSQL('seeders', '20240408230108-user', 'down')
       break
+    case 'db:create':
+      SQL.createDatabase()
+      break
+    case 'db:drop':
+      SQL.dropDatabase()
+      break
   }
 }
 
 function scripts() {
+  const title = `${underline}Leopardo SQL [Node: ${nodeV}, CLI/ORM: ${leopardoV}]${reset}`
+  console.log('\n' + title + '\n')
   const args = process.argv.slice(2)
   if (initCommands.includes(args[0])) {
     initScript(args)

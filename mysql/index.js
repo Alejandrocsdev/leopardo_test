@@ -1,87 +1,105 @@
 const path = require('path')
 const fs = require('fs')
 
+const colors = require('../utilities/color')
+const red = colors.red
+const blue = colors.blue
+const underline = colors.underline
+const reset = colors.reset
+
 class Mysql {
-  constructor(env) {
+  constructor() {
     this.connection = null
     this.mysql = null
     this.env = null
   }
 
-  async init() {
-    if (!this.mysql) {
-      try {
-        this.mysql = require('mysql2')
-      } catch (error) {
-        console.error('\x1b[31mERROR:\x1b[0m Please install \x1b[34mmysql2\x1b[0m package manually')
-        process.exit(1) // Exit the process with an error code
-      }
+  moduleCheck() {
+    try {
+      this.mysql = require('mysql2')
+    } catch (error) {
+      console.error(`${red}ERROR:${reset} Please install ${red}mysql2${reset} package manually.`)
+      process.exit(1)
     }
+  }
 
+  configCheck() {
     const configPath = path.join(__dirname, '..', '..', '..', 'config', 'config.json')
     try {
       this.env = require(configPath)
+      console.log('Loaded configuration file "config\\config.json".')
     } catch (error) {
-      console.error(`\x1b[31mERROR:\x1b[0m Missing or invalid config.json file
-      Please create a \x1b[31mconfig.json\x1b[0m file inside the \x1b[31mconfig\x1b[0m folder in your project's \x1b[31mroot\x1b[0m directory.
-      The config.json file should contain your MySQL database configuration in the following format:
-      \x1b[31m{
-        "user": "your_username",
-        "host": "your_hostname",
-        "password": "your_password"
-      }\x1b[0m`)
-      process.exit(1) // Exit the process with an error code
+      console.error(`${red}ERROR:${reset} Missing or invalid config.json file.
+
+Please make sure that the config.json file is present in the config folder of your project's root directory.
+If the config.json file is missing, you can generate it by running one of the following commands:
+1. leopardo-sql init
+2. leopardo-sql init:config`)
+      process.exit(1)
     }
+  }
+
+  async init(mode) {
+    this.moduleCheck()
+    this.configCheck()
+    mode = this.modeSwitch(mode)
+    this.env = this.env[mode]
     this.connection = this.mysql.createConnection(this.env)
   }
 
-  // async createDatabase(name) {
-  //   await this.init()
-  //   this.connection.query(`CREATE DATABASE IF NOT EXISTS ${name}`, (err) => {
-  //     if (err) {
-  //       console.log('Fail to create database: ' + err)
-  //       return
-  //     }
-  //     this.database(this.env, name, 'create')
-  //     console.log(`Database \x1b[34m${name}\x1b[0m created successfully`)
-  //   })
-  // }
-
-  async createDatabase(name) {
-    await this.init()
-    return new Promise((resolve, reject) => {
-      this.connection.query(`CREATE DATABASE IF NOT EXISTS ${name}`, (err) => {
-        if (err) {
-          console.log('Fail to create database: ' + err)
-          reject(err)
-          return
-        }
-        this.database(this.env, name, 'create')
-        console.log(`Database \x1b[34m${name}\x1b[0m created successfully`)
-        resolve()
-      })
-    })
+  modeSwitch(mode) {
+    const args = process.argv.slice(2)
+    if (args[1] === '--env' && args[2]) {
+      if (args[2] === 'development' || args[2] === 'test' || args[2] === 'production') {
+        mode = args[2]
+        console.log(`Using environment "${mode}".`)
+      } else {
+        console.log(`${red}ERROR:${reset} Invalid command.`)
+        process.exit(1)
+      }
+    } else if (mode === undefined && !args[1]) {
+      mode = 'development'
+      console.log(`Using environment "${mode}".`)
+    } else {
+      console.log(`${red}ERROR:${reset} Invalid command.`)
+      process.exit(1)
+    }
+    return mode
   }
 
-  async dropDatabase(name) {
-    await this.init()
-    this.connection.query(`DROP DATABASE IF EXISTS ${name}`, (err) => {
+  createDatabase(mode) {
+    this.moduleCheck()
+    this.configCheck()
+    mode = this.modeSwitch(mode)
+    const env = this.env[mode]
+    const name = env.database
+    const connection = this.mysql.createConnection({
+      host: env.host,
+      user: env.user,
+      password: env.password
+    })
+    connection.query(`CREATE DATABASE IF NOT EXISTS ${name}`, (err) => {
       if (err) {
-        console.log('Fail to drop database: ' + err)
+        console.log(`${red}ERROR:${reset} Fail to create database. ${err.message}.`)
         return
       }
-      this.database(this.env, name, 'drop')
-      console.log(`Database \x1b[31m${name}\x1b[0m dropped successfully`)
+      console.log(`Database ${blue}${name}${reset} created.`)
+      connection.end()
     })
   }
 
-  database(env, name, type) {
-    if (type === 'create') {
-      env.database = name
-    } else if (type === 'drop') {
-      delete env.database
-    }
-    fs.writeFileSync(`${__dirname}/../../../config/config.json`, JSON.stringify(env))
+  async dropDatabase(mode) {
+    await this.init()
+    const env = this.env
+    const name = env.database
+    this.connection.query(`DROP DATABASE IF EXISTS ${name}`, (err) => {
+      if (err) {
+        console.log(`${red}ERROR:${reset} Fail to drop database. ${err.message}.`)
+        return
+      }
+      console.log(`Database ${blue}${name}${reset} dropped.`)
+      this.connection.end()
+    })
   }
 
   async createTable(name, column) {
@@ -91,7 +109,7 @@ class Mysql {
     entries.forEach((e) => {
       const field = e[0]
       if (e[1].Type === undefined) {
-        console.error(`Error: Type is undefined for field '${field}'`)
+        console.error(`${red}ERROR:${reset} Type is undefined for field '${field}'`)
         return
       }
       const attrs = [e[1].Type, e[1].Null, e[1].Key, e[1].Default, e[1].Extra]
@@ -103,10 +121,10 @@ class Mysql {
 
     this.connection.query(`CREATE TABLE IF NOT EXISTS ${name} (${columns})`, (err) => {
       if (err) {
-        console.log('Fail to create table: ' + err)
+        console.log(`${red}ERROR:${reset} Fail to create table. ${err.message}.`)
         return
       }
-      console.log(`Table '${name}' created successfully`)
+      console.log(`Table ${blue}${name}${reset} created.`)
     })
   }
 
@@ -114,10 +132,10 @@ class Mysql {
     await this.init()
     this.connection.query(`DROP TABLE IF EXISTS ${name}`, (err) => {
       if (err) {
-        console.log('Fail to drop table: ' + err)
+        console.log(`${red}ERROR:${reset} Fail to drop table. ${err.message}.`)
         return
       }
-      console.log(`Table '${name}' dropped successfully`)
+      console.log(`Table ${blue}${name}${reset} dropped.`)
     })
   }
 
