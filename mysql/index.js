@@ -4,7 +4,6 @@ const fs = require('fs')
 const colors = require('../utilities/color')
 const red = colors.red
 const blue = colors.blue
-const underline = colors.underline
 const reset = colors.reset
 
 class Mysql {
@@ -14,11 +13,23 @@ class Mysql {
     this.env = null
   }
 
+  static enableLogging = true
+
+  static log(message) {
+    if (Mysql.enableLogging) {
+      console.log(message)
+    }
+  }
+
+  endConnection() {
+    this.connection.end()
+  }
+
   moduleCheck() {
     try {
       this.mysql = require('mysql2')
     } catch (error) {
-      console.error(`${red}ERROR:${reset} Please install ${red}mysql2${reset} package manually.`)
+      console.log(`${red}ERROR:${reset} Please install ${red}mysql2${reset} package manually.`)
       process.exit(1)
     }
   }
@@ -29,7 +40,7 @@ class Mysql {
       this.env = require(configPath)
       console.log('Loaded configuration file "config\\config.json".')
     } catch (error) {
-      console.error(`${red}ERROR:${reset} Missing or invalid config.json file.
+      console.log(`${red}ERROR:${reset} Missing or invalid config.json file.
 
 Please make sure that the config.json file is present in the config folder of your project's root directory.
 If the config.json file is missing, you can generate it by running one of the following commands:
@@ -50,7 +61,7 @@ If the config.json file is missing, you can generate it by running one of the fo
   modeSwitch(mode) {
     const args = process.argv.slice(2)
     if (args[1] === '--env' && args[2]) {
-      if (args[2] === 'development' || args[2] === 'test' || args[2] === 'production') {
+      if (args[2] === 'test' || args[2] === 'production') {
         mode = args[2]
         console.log(`Using environment "${mode}".`)
       } else {
@@ -102,8 +113,64 @@ If the config.json file is missing, you can generate it by running one of the fo
     })
   }
 
+  async checkLog(endConnect = true) {
+    if (!this.connection) {
+      await this.init()
+    }
+    const env = this.env
+    const name = env.database
+    return new Promise((resolve, reject) => {
+
+      this.connection.query(
+        `SELECT COUNT(*)
+            FROM information_schema.tables
+            WHERE table_schema = '${name}'
+            AND table_name = 'migrationlog';`,
+        (err, results) => {
+          if (err) {
+            console.log(`${red}ERROR:${reset} Fail to check table.`)
+            reject(err)
+            return
+          }
+
+          const count = results[0]['COUNT(*)']
+          if (endConnect) {
+            this.connection.end()
+          }
+          resolve(count)
+        }
+      )
+    })
+  }
+
+  // async checkLog() {
+  //   await this.init()
+
+  //   return new Promise((resolve, reject) => {
+  //     this.connection.query(
+  //       `SELECT COUNT(*)
+  //       FROM information_schema.tables
+  //       WHERE table_schema = 'test'
+  //       AND table_name = 'ones';`,
+  //       (err, results) => {
+  //         if (err) {
+  //           console.log(`${red}ERROR:${reset} Fail to check table.`)
+  //           reject(err)
+  //           return
+  //         }
+
+  //         const count = results[0]['COUNT(*)']
+  //         // this.connection.end()
+  //         resolve(count)
+  //       }
+  //     )
+  //   })
+  // }
+
   async createTable(name, column) {
-    await this.init()
+    if (!this.connection) {
+      await this.init()
+    }
     const entries = Object.entries(column)
     let columns = ''
     entries.forEach((e) => {
@@ -124,8 +191,11 @@ If the config.json file is missing, you can generate it by running one of the fo
         console.log(`${red}ERROR:${reset} Fail to create table. ${err.message}.`)
         return
       }
-      console.log(`Table ${blue}${name}${reset} created.`)
+      Mysql.log(`Table ${blue}${name}${reset} created.`)
     })
+    // if (endConnect) {
+    //   this.connection.end()
+    // }
   }
 
   async dropTable(name) {
@@ -137,6 +207,7 @@ If the config.json file is missing, you can generate it by running one of the fo
       }
       console.log(`Table ${blue}${name}${reset} dropped.`)
     })
+    this.connection.end()
   }
 
   async bulkInsert(name, data) {
@@ -159,6 +230,7 @@ If the config.json file is missing, you can generate it by running one of the fo
       }
       console.log(`Values bulk inserted into '${name}' table successfully`)
     })
+    this.connection.end()
   }
 
   async bulkDelete(name) {
@@ -173,17 +245,26 @@ If the config.json file is missing, you can generate it by running one of the fo
   }
 
   async insertRow(name, body) {
-    await this.init()
+    if (!this.connection) {
+      await this.init()
+    }
     const field = String(Object.keys(body))
     const value = Object.values(body)
       .map((value) => this.connection.escape(value))
       .join(',')
-    this.connection.query(`INSERT INTO ${name} (${field}) VALUES (${value});`, (err) => {
-      if (err) {
-        console.log('Fail to insert row: ' + err)
-        return
-      }
-      console.log(`Value inserted into '${name}' table successfully`)
+    return new Promise((resolve, reject) => {
+      this.connection.query(`INSERT INTO ${name} (${field}) VALUES (${value});`, (err) => {
+        if (err) {
+          console.log('Fail to insert row: ' + err)
+          reject(err)
+          return
+        }
+        Mysql.log(`Value inserted into '${name}' table successfully`)
+        // if (endConnect) {
+        //   this.connection.end()
+        // }
+        resolve()
+      })
     })
   }
 
@@ -200,6 +281,7 @@ If the config.json file is missing, you can generate it by running one of the fo
       }
       console.log(`Value from '${name}' table updated successfully`)
     })
+    this.connection.end()
   }
 
   async deleteRow(name, id) {
@@ -211,10 +293,13 @@ If the config.json file is missing, you can generate it by running one of the fo
       }
       console.log(`Value deleted from '${name}' table successfully`)
     })
+    this.connection.end()
   }
 
-  async select(name) {
-    await this.init()
+  async select(name, endConnect = true) {
+    if (!this.connection) {
+      await this.init()
+    }
     return new Promise((resolve, reject) => {
       this.connection.query(`SELECT * FROM ${name};`, (err, results) => {
         if (err) {
@@ -222,7 +307,10 @@ If the config.json file is missing, you can generate it by running one of the fo
           reject(err)
           return
         }
-        console.log(`Select from '${name}' table successfully`)
+        Mysql.log(`Select from '${name}' table successfully`)
+        if (endConnect) {
+          this.connection.end()
+        }
         resolve(results)
       })
     })

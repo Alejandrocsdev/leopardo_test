@@ -20,6 +20,6 @@
   },
   "homepage": "https://github.com/Alejandrocsdev/leopardo#readme",
   "bin": {
-    "leopardo-sql": "./bin/script.js"
+    "leopardo-sql": "./bin/index.js"
   }
 }
