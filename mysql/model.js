@@ -1,4 +1,5 @@
 const SQL = require('.')
+const pluralize = require('pluralize')
 
 // class Model {
 //   findAll(name) {
@@ -12,11 +13,10 @@ class Model {
   //   console.log(name) // Accessing static method from subclass
   //   return await SQL.select(name)
   // }
-  async findAll(name) {
-    return await SQL.select(name)
-  }
-  test (name) {
-    console.log(name)
+  async findAll() {
+    const modelName = this.constructor.modelName()
+    const tableName = pluralize(modelName)
+    return await SQL.select(tableName)
   }
 }
 

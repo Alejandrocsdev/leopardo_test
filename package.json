@@ -21,5 +21,8 @@
   "homepage": "https://github.com/Alejandrocsdev/leopardo#readme",
   "bin": {
     "leopardo-sql": "./bin/index.js"
+  },
+  "dependencies": {
+    "pluralize": "^8.0.0"
   }
 }
