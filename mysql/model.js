@@ -14,9 +14,10 @@ class Model {
   //   return await SQL.select(name)
   // }
   async findAll() {
+    SQL.constructor.enableLogging = false
     const modelName = this.constructor.modelName()
     const tableName = pluralize(modelName)
-    return await SQL.select(tableName)
+    return await SQL.select(tableName, false)
   }
 }
 
