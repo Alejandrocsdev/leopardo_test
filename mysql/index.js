@@ -345,6 +345,7 @@ If the config.json file is missing, you can generate it by running one of the fo
         if (endConnect) {
           this.connection.end()
         }
+        // console.log(results)
         resolve(results)
       })
     })

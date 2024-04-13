@@ -62,6 +62,9 @@ function fileContent(file) {
 
 function eachHelper(main, eachRegexp, data) {
   const variable = main.match(eachRegexp)[1]
+  console.log('data: ', data)
+  console.log('variable: ', variable)
+  console.log('data[variable]: ', data[variable])
   const iterateCount = data[variable].length
   const startIndex = main.indexOf(`{{#each ${variable}}}`) + `{{#each ${variable}}}`.length
   const endIndex = main.indexOf('{{/each}}')

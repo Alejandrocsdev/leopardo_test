@@ -4,6 +4,7 @@ const router = require('./routes')
 const middleware = require('./middlewares')
 const extendResponse = require('./response')
 const SQL = require('./mysql')
+const Model = require('./mysql/model.js')
 
 // Main function for creating the leopardo framework
 function leopardo() {
@@ -59,3 +60,4 @@ function leopardo() {
 
 module.exports = leopardo
 module.exports.SQL = SQL
+module.exports.Model = Model
