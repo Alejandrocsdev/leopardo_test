@@ -213,26 +213,30 @@ If the config.json file is missing, you can generate it by running one of the fo
   }
 
   async bulkInsert(name, data) {
-    await this.init()
+    if (!this.connection) {
+      await this.init()
+    }
     if (Array.isArray(Object.values(data)[0])) {
       data = Object.values(data)[0]
     }
     const keys = Object.keys(data[0]).filter((key) => key !== 'id')
     const fields = String(keys)
+    // console.log(fields)
     let values = ''
     data.forEach((row) => {
       delete row.id
       values += `('${Object.values(row).join("','")}'),`
     })
     values = values.slice(0, -1) + ';'
+    // console.log(values)
     this.connection.query(`INSERT INTO ${name} (${fields}) VALUES ${values}`, (err) => {
       if (err) {
         console.log('Fail to bulk insert rows: ' + err)
         return
       }
-      console.log(`Values bulk inserted into '${name}' table successfully`)
+      Mysql.log(`Values bulk inserted into '${name}' table successfully`)
     })
-    this.connection.end()
+    // this.connection.end()
   }
 
   async bulkDelete(name) {

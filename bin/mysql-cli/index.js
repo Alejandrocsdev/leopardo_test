@@ -176,20 +176,8 @@ async function migration(command) {
     }
 
     const files = await fs.promises.readdir(folderPath)
-    // console.log('files: ', files)
-    // console.log('files.slice(-1): ', files.slice(-1))
 
     const migrations = await SQL.select('migrationlog', false)
-    // console.log(migrations[migrations.length - 1].name)
-    // console.log(Object.values(migrations.slice(-1)))
-    // console.log(migrations)
-    // const lastFile = Object.values(migrations[0]).slice(-1)[0]
-
-    // console.log('migrations[0]: ', migrations[0])
-    // console.log('Object.values(migrations[0]).slice(-1): ', Object.values(migrations[0]).slice(-1))
-
-    // const lastFilePath = path.join(folderPath, lastFile)
-    // const { down } = require(lastFilePath)
 
     if (command === 'db:migrate') {
       let notIncluded = 0
@@ -229,12 +217,12 @@ async function migration(command) {
         SQL.deleteLastRow('migrationlog')
         fs.unlink(lastFilePath, (err) => {
           if (err) {
-            console.error('Error deleting file:', err);
-            return;
+            console.error('Error deleting file:', err)
+            return
           }
-        
-          console.log('File deleted successfully');
-        });
+
+          console.log('File deleted successfully')
+        })
       }
     } else if (command === 'db:migrate:undo:all') {
       if (migrations.length === 0) {
@@ -255,15 +243,40 @@ async function migration(command) {
           await SQL.deleteRow('migrationlog', { name: file })
           fs.unlink(filePath, (err) => {
             if (err) {
-              console.error('Error deleting file:', err);
-              return;
+              console.error('Error deleting file:', err)
+              return
             }
-          
-            SQL.constructor.log('File deleted successfully');
-          });
+
+            SQL.constructor.log('File deleted successfully')
+          })
         } else if (!isIncluded) {
           console.log(`${red}ERROR:${reset} Unable to find migration: ${file}`)
         }
+      }
+    }
+    SQL.endConnection()
+  } catch (err) {
+    console.error(`Failed to execute files: ${err}`)
+  }
+}
+
+async function seed(command) {
+  await SQL.init()
+  const folderPath = path.join(__dirname, '..', '..', '..', '..', 'seeders')
+  SQL.constructor.enableLogging = false
+  const files = await fs.promises.readdir(folderPath)
+  
+  try {
+    if (command === 'db:seed:all') {
+      for (const file of files) {
+        const filePath = path.join(folderPath, file)
+        const { up } = require(filePath)
+        console.log('\n' + `== ${file}: migrating =======`)
+        const start = performance.now()
+        await up()
+        const end = performance.now()
+        const duration = (end - start).toFixed(3)
+        console.log(`== ${file}: migrated (${duration}s)`)
       }
     }
     SQL.endConnection()
@@ -337,12 +350,18 @@ function dbScript(args) {
     case 'db:migrate:undo:all':
       migration(command)
       break
-    case 'db:seed':
-      executeFile('seeders', '20240408230108-user', 'up')
+    // case 'db:seed':
+    //   seed(command)
+    //   break
+    // case 'db:seed:undo':
+    //   seed(command)
+    //   break
+    case 'db:seed:all':
+      seed(command)
       break
-    case 'db:seed:undo':
-      executeFile('seeders', '20240408230108-user', 'down')
-      break
+    // case 'db:seed:undo:all':
+    //   seed(command)
+    //   break
     case 'db:create':
       SQL.createDatabase()
       break

@@ -2,33 +2,16 @@ const { SQL } = require('leopardo')
 
 module.exports = {
   async up() {
-    SQL.bulkInsert('#tableName#', {
-      id: {
-        Type: 'INT',
-        Null: 'NOT NULL',
-        Key: 'PRIMARY KEY',
-        Default: 'AUTO_INCREMENT'
-      },
-      // name: {
-      //   Type: 'VARCHAR(255)',
-      //   Null: 'NOT NULL',
-      //   Key: '',
-      //   Default: '',
-      //   Extra: ''
-      // },
-      createdAt: {
-        Type: 'TIMESTAMP',
-        Null: 'NOT NULL',
-        Default: 'DEFAULT CURRENT_TIMESTAMP'
-      },
-      updatedAt: {
-        Type: 'TIMESTAMP',
-        Null: 'NOT NULL',
-        Default: 'DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'
-      }
-    })
+    // Add seed commands here.
+    // Example:
+    // SQL.bulkInsert('users', [{
+    //   name: 'John Doe',
+    //   age: 18
+    // }])
   },
   async down() {
-    SQL.bulkDelete('#tableName#')
+    // Add commands to revert seed here.
+    // Example:
+    // SQL.bulkDelete('users');
   }
 }
