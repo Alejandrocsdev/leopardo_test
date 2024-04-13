@@ -1,6 +1,7 @@
 // module
 const fs = require('fs')
 const path = require('path')
+const pluralize = require('pluralize')
 // Mysql
 const SQL = require('../../mysql')
 // utility
@@ -131,14 +132,25 @@ function generateFile(folderName, fileName, fileEndName) {
       return
     }
 
-    let tableName
-    if ((folderName === 'migrations', fileName === 'create.js')) {
-      tableName = `${args[2]}s`
-    } else if ((folderName === 'models', fileName === 'index.js')) {
-      tableName = `${args[2]}`
-    }
+    const modelName = args[2]
+    const tableName = pluralize(modelName)
+    // let name
+    // if ((folderName === 'migrations', fileName === 'create.js')) {
+    //   name = tableName
+    // } else if ((folderName === 'models', fileName === 'index.js')) {
+    //   name = modelName
+    // }
 
-    const replacedData = data.replace(/#tableName#/g, tableName)
+    const replacedData = data
+      .replace(/`/g, '') // Remove backticks from beginning and end
+      .replace(/#(tableName|modelName)#/g, (match, group) => {
+        if (group === 'tableName') {
+          return tableName
+        } else if (group === 'modelName') {
+          return modelName
+        }
+        return match // Return the original match if no replacement is needed
+      })
 
     let result
     switch (folderName) {
@@ -265,7 +277,7 @@ async function seed(command) {
   const folderPath = path.join(__dirname, '..', '..', '..', '..', 'seeders')
   SQL.constructor.enableLogging = false
   const files = await fs.promises.readdir(folderPath)
-  
+
   try {
     if (command === 'db:seed:all') {
       for (const file of files) {
@@ -330,7 +342,7 @@ function generateScript(args) {
       break
     case 'generate:model':
       generateFile('migrations', 'create.js', name)
-      generateFile('models', 'index.js', modelName)
+      generateFile('models', 'table.js', modelName)
       break
     case 'generate:seed':
       generateFile('seeders', 'index.js', name)

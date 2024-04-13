@@ -7,13 +7,6 @@ const config = require(__dirname + '/../config/config.json')[env]
 const db = {}
 const { SQL } = require('leopardo')
 
-// let sequelize
-// if (config.use_env_variable) {
-//   sequelize = new Sequelize(process.env[config.use_env_variable], config)
-// } else {
-//   sequelize = new Sequelize(config.database, config.username, config.password, config)
-// }
-
 fs.readdirSync(__dirname)
   .filter((file) => {
     return (
@@ -24,17 +17,9 @@ fs.readdirSync(__dirname)
     )
   })
   .forEach((file) => {
-    const model = require(path.join(__dirname, file))(sequelize, Sequelize.DataTypes)
-    db[model.name] = model
+    const Model = require(path.join(__dirname, file))
+    const model = new Model()
+    db[Model.modelName()] = model
   })
-
-Object.keys(db).forEach((modelName) => {
-  if (db[modelName].associate) {
-    db[modelName].associate(db)
-  }
-})
-
-db.sequelize = sequelize
-db.Sequelize = Sequelize
 
 module.exports = db
