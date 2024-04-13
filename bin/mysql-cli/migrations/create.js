@@ -5,6 +5,7 @@ module.exports = {
     SQL.createTable('#tableName#', {
       id: {
         Type: 'INT',
+        Null: 'NOT NULL',
         Key: 'PRIMARY KEY',
         Default: 'AUTO_INCREMENT'
       },
@@ -17,10 +18,12 @@ module.exports = {
       // },
       createdAt: {
         Type: 'TIMESTAMP',
+        Null: 'NOT NULL',
         Default: 'DEFAULT CURRENT_TIMESTAMP'
       },
       updatedAt: {
         Type: 'TIMESTAMP',
+        Null: 'NOT NULL',
         Default: 'DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'
       }
     })

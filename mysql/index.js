@@ -199,15 +199,17 @@ If the config.json file is missing, you can generate it by running one of the fo
   }
 
   async dropTable(name) {
-    await this.init()
+    if (!this.connection) {
+      await this.init()
+    }
     this.connection.query(`DROP TABLE IF EXISTS ${name}`, (err) => {
       if (err) {
         console.log(`${red}ERROR:${reset} Fail to drop table. ${err.message}.`)
         return
       }
-      console.log(`Table ${blue}${name}${reset} dropped.`)
+      Mysql.log(`Table ${blue}${name}${reset} dropped.`)
     })
-    this.connection.end()
+    // this.connection.end()
   }
 
   async bulkInsert(name, data) {
@@ -284,16 +286,44 @@ If the config.json file is missing, you can generate it by running one of the fo
     this.connection.end()
   }
 
-  async deleteRow(name, id) {
-    await this.init()
-    this.connection.query(`DELETE FROM ${name} WHERE id = ${id};`, (err) => {
+  async deleteRow(name, body) {
+    if (!this.connection) {
+      await this.init()
+    }
+    const field = String(Object.keys(body))
+    const value = Object.values(body)
+      .map((value) => this.connection.escape(value))
+      .join(',')
+    this.connection.query(`DELETE FROM ${name} WHERE ${field} = ${value};`, (err) => {
       if (err) {
         console.log('Fail to delete row: ' + err)
         return
       }
-      console.log(`Value deleted from '${name}' table successfully`)
+      Mysql.log(`Value deleted from '${name}' table successfully`)
     })
-    this.connection.end()
+    // this.connection.end()
+  }
+
+  async deleteLastRow(name) {
+    if (!this.connection) {
+      await this.init()
+    }
+    this.connection.query(`DELETE FROM ${name} ORDER BY name DESC LIMIT 1;`, (err) => {
+      if (err) {
+        console.log('Fail to delete last row: ' + err)
+        return
+      }
+      Mysql.log(`Value deleted from '${name}' table successfully`)
+    })
+
+    this.connection.query(`SELECT * FROM ${name} ORDER BY name ASC;`, (err) => {
+      if (err) {
+        console.log('Fail to delete last row: ' + err)
+        return
+      }
+      Mysql.log(`Value deleted from '${name}' table successfully`)
+    })
+    // this.connection.end()
   }
 
   async select(name, endConnect = true) {

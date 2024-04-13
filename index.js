@@ -58,4 +58,4 @@ function leopardo() {
 }
 
 module.exports = leopardo
-module.exports = { SQL }
+module.exports.SQL = SQL
